@@ -1,5 +1,5 @@
 import { useDateGroupStore } from "../store/Group.ts";
-import {useActivePaletteStore} from "../store/All.ts";
+import {useActivePaletteStore, useCategoryStore} from "../store/All.ts";
 import {useState} from "react";
 
 interface BigGroup {
@@ -9,6 +9,7 @@ interface BigGroup {
 export default function Group(){
     //ALL.tsx
     const activePalette = useActivePaletteStore((state) => state.palette);
+    const category = useCategoryStore((state) => state.list);
 
     //Group.tsx
     const dateGroup = useDateGroupStore((state) => state.total);
@@ -57,18 +58,23 @@ export default function Group(){
                         return (<li key={index} className="w-[11.25vw] rounded-[2.083vw] bg-[rgba(255,255,255,.8)]">
                             <h5 className="block px-[1.042vw] pt-[0.833vw] text-[#3F3F3F] text-[2.083vw] text-right box-border">{groupType?.koreaName}</h5>
                             {/* 수입 지출 wrap */}
-                            <ul className="pt-[1.25vw] pb-[1.25vw] grid grid-cols-2 px-[1.25vw] box-border">
+                            <ul className="pt-[1.25vw] pb-[1.25vw] grid gap-[1.042vw] grid-cols-2 px-[1.25vw] box-border">
                                 {groupType ? Object.keys(groupType.moneyType).map((depthKey, index)=>{
                                     const moneyKey = depthKey as keyof (typeof groupType.moneyType);
 
-                                    return(<li key={index} className="gap-[1.042vw]">
+                                    return(<li key={index}>
                                         {/* 카테고리 */}
-                                        <div>
-                                            <span></span>
+                                        <div className="h-[10px] flex gap-[5px]">
+                                            {groupType.moneyType[moneyKey].category !== null ? groupType.moneyType[moneyKey].category?.map((element, subIndex)=>{
+                                                //element.id === category.id 일 경우 color 가져오기
+                                                const findColor = category.find((item)=>item.id === element.id);
+                                                return (<span key={subIndex} className="block w-[10px] h-[100%] rounded-full bg-[#000]" style={{backgroundColor:findColor !== undefined ? findColor.color : undefined}}>
+                                                </span>)
+                                            }) : null}
                                         </div>
                                         {/* 금액 */}
                                         <p className={`${activePalette[moneyKey].text} text-[1.042vw] text-right`}>
-                                            {/* TODO:: 저번달 확인 필요, */}
+                                            {/* TODO:: 저번달 확인 필요, 월간/지난달 0 일 때 표기 확인 */}
                                             {Array.isArray(groupType.moneyType[moneyKey].money) && groupType.moneyType[moneyKey].money !== null ?
                                                 groupType.moneyType[moneyKey].money.reduce((accumulator, currentValue) => accumulator + currentValue, 0,) :
                                                 !Array.isArray(groupType.moneyType[moneyKey].money) ?

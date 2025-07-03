@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import moment from 'moment';
 import type { SaveField } from "../component/List.tsx";
+import type { DateListType } from "../store/List.tsx";
 
 
 //날짜순 type
@@ -29,7 +30,7 @@ interface DateGroup {
     }
     initUpdate: (todayTime:string)=> void;
     mathSum: (todayTime:string, saveField:SaveField)=> void;
-    mathImsub: ()=> void;
+    mathImsub: (todayData: DateListType)=> void;
 }
 
 //날짜순 store
@@ -180,7 +181,7 @@ export const useDateGroupStore = create<DateGroup>((set) => ({
                         }
                     },
                 } , };
-            const moneyCommaRemove = saveField.money !== null && saveField.money.replace(/,/g, "")
+            const moneyCommaRemove = saveField.money !== null && saveField.money.replace(/,/g, "");
 
             //saveField.typeButton[].isActive:true 인 것 반환
             const activeKey = Object.keys(saveField.typeButton).find((key) => {
@@ -188,6 +189,63 @@ export const useDateGroupStore = create<DateGroup>((set) => ({
                 return saveField.typeButton[typeKey].isActive ? key : null;
             });
 
+            const categoryLogic = (depth1type: string, depth2type: string) => {
+                //카테고리 관련
+                if(saveField.category.id !== null){
+                    //onSubmit 했을 때 값이 기입되어 있을 경우
+
+
+                    //state.total.@@.category.id 확인
+
+                    //없다면 --> 객체 추가
+                    //있다면 --> 해당 객체 내부 수정
+                    //두가지 모두 return 으로 값 받기
+                    const groupType = depth1type as keyof typeof copyTotal;
+                    const money = depth2type as keyof typeof copyTotal.today.moneyType; //!!!
+                    const copyCategory: CategoryType[] = copyTotal[groupType]?.moneyType[money].category ?? [];
+
+                    if(copyCategory){
+                        //state.total.@@.category.id 확인
+                        const findCategory = copyCategory?.find((element)=>element?.id === saveField.category.id);
+
+                        if(findCategory === undefined){
+                            //없다면 --> 객체 추가
+                            //객체 추가
+                            copyCategory.push({
+                                id:saveField.category.id,
+                                useLength:1,
+                            });
+                        }else {
+                            //있다면 --> 해당 객체 내부 수정
+
+                            for (let index = 0; index < copyCategory.length; index++){
+                                const element = copyCategory[index];
+
+                                if (element.id !== saveField.category.id) {
+                                    continue;
+                                }
+
+                                copyCategory[index] = {...element, useLength: element.useLength + 1};
+                            }
+
+                            //추가된 항목 정렬
+                            copyCategory.sort((a, b) => {
+                                return b.useLength - a.useLength;
+                            });
+                        }
+                    }
+                }
+            }
+            const categoryReset = (depth1type: string, depth2type: string)=>{
+                const groupType = depth1type as keyof typeof copyTotal;
+                const typeKey = depth2type as keyof typeof copyTotal.today.moneyType; //!!!
+                const copyCategory: CategoryType[] = copyTotal[groupType]?.moneyType[typeKey].category ?? [];
+                if(copyCategory){
+                    copyCategory.length = 0;
+                }
+            }
+
+            //TODO:: 오늘, 주간, 이번달 += 하면 콤마 삽입 작업
             //오늘
             if(copyTotal.today.date === todayTime && copyTotal.today.date !== ""){
                 //일치하는 경우
@@ -199,129 +257,43 @@ export const useDateGroupStore = create<DateGroup>((set) => ({
                 }else {
                     copyTotal.today.moneyType[typeKey].money = Number(moneyCommaRemove);
                 }
+                //카테고리
+                categoryLogic("today", typeKey);
+            }else {
+                //일치하지 않을 경우
+                //값 다시 넣기
+                copyTotal.today.date = todayTime;
 
-                //카테고리 관련
-                if(saveField.category.id !== null){
-                    //onSubmit 했을 때 값이 기입되어 있을 경우
-
-
-                    //state.total.@@.category.id 확인
-
-                    //없다면 --> 객체 추가
-                    //있다면 --> 해당 객체 내부 수정
-                    //두가지 모두 return 으로 값 받기
-
-                    const copyCategory: CategoryType[] = copyTotal.today.moneyType[typeKey].category ?? [];
-
-                    if(copyCategory){
-                        //state.total.@@.category.id 확인
-                        const findCategory = copyCategory?.find((element)=>element?.id === saveField.category.id);
-
-                        if(findCategory === undefined){
-                            //없다면 --> 객체 추가
-                            console.log("없다면");
-
-                            //객체 추가
-                            copyCategory.push({
-                                id:saveField.category.id,
-                                useLength:1,
-                            });
-                        }else {
-                            //있다면 --> 해당 객체 내부 수정
-
-                            copyCategory.map((element)=>{
-                                if(element.id === saveField.category.id){
-                                    return {...element, useLength: element.useLength + 1}; //!!! +1되는 로직 반영 불가
-                                }
-                                return {...element};
-                            });
-
-                            console.log("있다면", findCategory, copyCategory);
-                        }
-                    }
-
-
-                //!!!안되서 주석 start
-/*                    const findCategory = copyTotal.today.moneyType[typeKey].category?.find((element)=>element?.id === saveField.category.id);
-
-                    if(findCategory === undefined){
-                       //total.today.moneyType[typeKey].category 내부에 해당 id가 있는지 체크 => 없을 경우
-                        //1부터 시작
-
-                        copyTotal.today.moneyType[typeKey].category?.push({
-                            id:saveField.category.id,
-                            useLength:1,
-                        });
-                    }else {
-                        //있을 경우
-                        //total.today.moneyType[typeKey].category 에서 해당하는 id의 객체를 가져옴
-                        //객체.useLength 부분 ++
-                        const currentCategory:CategoryType[] = copyTotal.today.moneyType[typeKey].category ?? [];
-
-                        if(currentCategory){
-                            const updateCategory = copyTotal.today.moneyType[typeKey].category?.map((element)=>{
-                                if(element?.id === saveField.category.id){
-                                    console.log("aaa", element);
-                                    return {...element, useLength:element.useLength + 1};
-                                }
-                                return {...element};
-                            });
-
-
-                            const sortCategory = updateCategory?.filter((element): element is CategoryType => {
-                                console.log("bbb", element);
-                                    return element != null && typeof element.useLength === 'number' && typeof element.id === 'string'
-                                }
-                            )
-
-                            console.log(sortCategory)
-                            sortCategory?.sort((a, b) => {
-                                console.log("ccc")
-                                return (b.useLength) - (a.useLength)
-                            });
-
-                            if (typeKey === 'income') {
-                                // income 객체도 다시 만들어 할당하여 불변성 유지
-                                copyTotal.today.moneyType.income = {
-                                    ...copyTotal.today.moneyType.income,
-                                    category: sortCategory
-                                };
-                            } else if (typeKey === 'export') {
-                                // export 객체도 다시 만들어 할당하여 불변성 유지
-                                copyTotal.today.moneyType.export = {
-                                    ...copyTotal.today.moneyType.export,
-                                    category: sortCategory
-                                };
-                            }
-                        }
-                        console.log(copyTotal.today.moneyType[typeKey].category);
-
-                    }*/
-                    //!!!안되서 주석 end
-
-
-                }
+                //카테고리 초기화
+                const typeKey = activeKey as keyof typeof copyTotal.today.moneyType;
+                categoryReset("today", typeKey);
             }
 
 
-
-
-
-/*            //몇주인지 구하기
+            //몇주인지 구하기
             const currentWeek = moment().local().week();
             const firstMonthWeek = moment().startOf('month').week();
             const week = currentWeek - firstMonthWeek + 1;
 
             //주간
-            if(total.week.date === week && total.week.date !== null){
+            if(copyTotal.week.date === week && copyTotal.week.date !== null){
                 //일치하는 경우
                 const typeKey = activeKey as keyof typeof total.week.moneyType;
                 //moneyType[].money = saveField.money
-                if(total.week.moneyType[typeKey].money !== null){
-                    total.week.moneyType[typeKey].money += Number(moneyCommaRemove);
+                if(copyTotal.week.moneyType[typeKey].money !== null){
+                    copyTotal.week.moneyType[typeKey].money += Number(moneyCommaRemove);
                 }else {
-                    total.week.moneyType[typeKey].money = Number(moneyCommaRemove);
+                    copyTotal.week.moneyType[typeKey].money = Number(moneyCommaRemove);
                 }
+                categoryLogic("week", typeKey);
+            }else {
+                //일치하지 않을 경우
+                //값 다시 넣기
+                copyTotal.week.date = week;
+
+                //카테고리 초기화
+                const typeKey = activeKey as keyof typeof total.week.moneyType;
+                categoryReset("today", typeKey);
             }
 
             //월간
@@ -331,29 +303,128 @@ export const useDateGroupStore = create<DateGroup>((set) => ({
 
             //몇주인지 확인하고, index - 1 자리에 money 기입
             const month = moment().format("MM");
-            if(total.thisMonth.date === month && total.thisMonth.date !== null){
+            if(copyTotal.thisMonth.date === month && copyTotal.thisMonth.date !== null){
                 //일치하는 경우
-                const typeKey = activeKey as keyof typeof total.thisMonth.moneyType;
+                const typeKey = activeKey as keyof typeof copyTotal.thisMonth.moneyType;
                 //moneyType[].money = saveField.money
-                if(total.thisMonth.moneyType[typeKey].money !== null){
-                    if(total.thisMonth.moneyType[typeKey].money.length < allWeek){
-                        total.thisMonth.moneyType[typeKey].money = new Array(allWeek).fill(0);
+                if(copyTotal.thisMonth.moneyType[typeKey].money !== null){
+                    if(copyTotal.thisMonth.moneyType[typeKey].money.length < allWeek){
+                        copyTotal.thisMonth.moneyType[typeKey].money = new Array(allWeek).fill(0);
                     }
-                    total.thisMonth.moneyType[typeKey].money[week - 1] += Number(moneyCommaRemove);
+                    copyTotal.thisMonth.moneyType[typeKey].money[week - 1] += Number(moneyCommaRemove);
                 }
+                categoryLogic("thisMonth", typeKey)
+            }else {
+                //일치하지 않을 경우
+                //값 다시 넣기
+                copyTotal.thisMonth.date = week;
+
+                //카테고리 초기화
+                const typeKey = activeKey as keyof typeof copyTotal.thisMonth.moneyType;
+                categoryReset("today", typeKey);
             }
-            console.log(total);*/
 
             return { total:copyTotal }
         }),
-    mathImsub: () =>
+    mathImsub: (todayData) =>
         set((state) => {
             //*삭제 버튼 눌렀을 때 발동*
+            //관련 객체 money, category
             //오늘 : 삭제하면 데이터에서 제거
             //주간 : (몇주)인지 확인, 일치할 경우 제거
             //월간 : (몇주)인지 확인, 일치할 경우 해당 주차에 - => 모든 주간을 합계
+            //지난달 : 로직 없음
 
-            return { total:state.total }
+            /*오늘
+            * today.money !== 0 일경우, list index 가 1이상일 경우
+            * today.money.type (수입 or 지출) 확인하고, type 맞는 today.money 감액
+            * category에서도 -1
+            *
+            * */
+            const total = state.total;
+            const copyTotal = { ...total,
+                today:{...total.today,
+                    moneyType: {...total.today.moneyType,
+                        income:{...total.today.moneyType.income,
+                            category:total.today.moneyType.income.category
+                                ? total.today.moneyType.income.category?.map(item => ({ ...item })) // 각 객체도 깊게 복사
+                                : [],
+                        },
+                        export:{...total.today.moneyType.export,
+                            category:total.today.moneyType.export.category
+                                ? total.today.moneyType.export.category?.map(item => ({ ...item })) // 각 객체도 깊게 복사
+                                : [],
+                        }
+                    },
+                } , };
+            const moneyCommaRemove = todayData.money !== null && todayData.money.replace(/,/g, "");
+
+            //todayData.activeButton 에서 true인 key 반환
+            const trueActiveButton= Object.keys(todayData.activeButton).find((element)=>element);
+            const typeKey= trueActiveButton as keyof typeof todayData.activeButton;
+
+            //월간
+            //몇주인지 구하기
+            const currentWeek = moment().local().week();
+            const firstMonthWeek = moment().startOf('month').week();
+            const week = currentWeek - firstMonthWeek + 1;
+
+            if((trueActiveButton !== undefined) && copyTotal.today.moneyType[typeKey].money !== null && copyTotal.week.moneyType[typeKey].money !== null && copyTotal.thisMonth.moneyType[typeKey].money !== null){
+                //수입 or 수출에 active 되어있다면
+                copyTotal.today.moneyType[typeKey].money -= Number(moneyCommaRemove);
+                copyTotal.week.moneyType[typeKey].money -= Number(moneyCommaRemove);
+                copyTotal.thisMonth.moneyType[typeKey].money[week - 1] -= Number(moneyCommaRemove);
+
+                if(copyTotal.today.moneyType[typeKey].money === 0){
+                    //!!! 타입 확인
+                    //copyTotal.today.moneyType[typeKey].money = "";
+                }
+
+                //카테고리 관련
+                // !!객체가 없을 수도 있음!!
+                Object.keys(copyTotal).forEach((group)=>{
+                    if(group !== "lastMonth"){
+                        //저번달 제외
+                        const groupKey = group as keyof typeof copyTotal;
+                        const copyCategory = copyTotal[groupKey]?.moneyType[typeKey].category ?? [];
+
+                        if(copyCategory){
+                            //state.total.@@.category.id 확인
+                            const findCategory = copyCategory?.find((element)=>element?.id === todayData.categoryID);
+
+                            if(findCategory !== undefined){
+                                //있다면
+                                if(findCategory.useLength > 1){
+                                    //true 고 useLength 가 2 이상이라면 -1
+                                    for (let index = 0; index < copyCategory.length; index++){
+                                        const element = copyCategory[index];
+
+                                        if (element.id !== todayData.categoryID) {
+                                            continue;
+                                        }
+
+                                        copyCategory[index] = {...element, useLength: element.useLength - 1};
+                                    }
+                                }else {
+                                    //true 고 useLength 가 1이라면 -1 및 객체 삭제
+                                    for (let index = 0; index < copyCategory.length; index++){
+                                        const element = copyCategory[index];
+
+                                        if (element.id !== todayData.categoryID) {
+                                            continue;
+                                        }
+                                        copyCategory.splice(index, 1);
+                                    }
+                                }
+                            }
+                            //객체가 없다면 로직 없음
+                        }
+                    }
+                });
+            }
+
+
+            return { total:copyTotal }
         }),
 }));
 
@@ -367,20 +438,24 @@ interface CategoryGroupType {
 }
 interface CategoryGroup {
     total: CategoryGroupType[];
+    update: ()=> void;
     mathSum: ()=> void;
 }
 
 //카테고리순 store
 export const useCategoryGroupStore = create<CategoryGroup>((set) => ({
-    total: [
-        {
+    total: [],
+    update: ()=> set((state)=>{
+        //페이지 첫 진입 시 All.ts에 있는 category 확인 후 객체 삽입
+        /*{
             id:0,
             color:"",
             koreaName:"",
             incomeMoney:0,
             exportMoney:0,
-        }
-    ],
+        }*/
+        return state
+    }),
     mathSum: () =>
         set((state) => {
             return state

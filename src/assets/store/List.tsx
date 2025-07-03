@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import moment from "moment/moment";
 import type { SaveField } from "../component/List.tsx";
 
-interface DateListType {
+export interface DateListType {
     id:number;
     isDeleted:boolean;
     activeButton: {

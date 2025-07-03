@@ -1,7 +1,7 @@
 import {useEffect, useState} from "react";
 import moment from 'moment';
 import { useDateListStore } from "../store/List.tsx";
-import {useActivePaletteStore} from "../store/All.ts";
+import {useActivePaletteStore, useCategoryStore} from "../store/All.ts";
 import {useDateGroupStore} from "../store/Group.ts";
 
 // 5px -> 0.26vw
@@ -47,6 +47,9 @@ const todayTime = moment().format("YYYY-MM-DD");
 export default function List(){
     //ALL.tsx
     const activePalette = useActivePaletteStore((state) => state.palette);
+    const category = useCategoryStore((state) => state.list);
+    const categoryActiveChange = useCategoryStore((state) => state.activeChange);
+    const categoryNameChange = useCategoryStore((state) => state.nameChange);
 
     //List.tsx
     const todayList = useDateListStore((state) => state.today);
@@ -56,34 +59,8 @@ export default function List(){
     //group.tsx
     const initUpdate = useDateGroupStore((state) => state.initUpdate);
     const mathSum = useDateGroupStore((state) => state.mathSum);
+    const mathImsub = useDateGroupStore((state) => state.mathImsub);
 
-    //카테고리 useState
-    const [category, setCategory] = useState([
-        {
-            id:0,
-            isActive:true,
-            color:"#FFA742",
-            name:"기본 카테고리1",
-        },
-        {
-            id:1,
-            isActive:false,
-            color:"#9EF284",
-            name:"기본 카테고리2",
-        },
-        {
-            id:2,
-            isActive:false,
-            color:"#B560F5",
-            name:"기본 카테고리3",
-        },
-        {
-            id:3,
-            isActive:false,
-            color:"#030417",
-            name:"기본 카테고리4",
-        },
-    ]);
     //클릭하는 타입들 useState
     const [clickType, setClickType] = useState({
         typeButton:{
@@ -127,7 +104,7 @@ export default function List(){
     });
 
     //state.today 에서 오늘 날짜를 가진 객체 찾기
-    const todayData = todayList.filter((element)=>element.date === todayTime);
+    const todayData = todayList.find((element)=>element.date === todayTime);
     //카테고리 선택관련 .isActive true 찾기
     const categoryIsActive = category.find((element)=>element.isActive);
 
@@ -288,28 +265,13 @@ export default function List(){
                             {category.map((element, index)=>{
                                 return (<li key={index} className={`w-[0.833vw] h-[0.833vw] relative`}>
                                     <button type="button" className={`${element.isActive ? "w-[0.833vw] h-[0.833vw]" : "w-[0.521vw] h-[0.521vw]"} block absolute top-1/2 left-1/2 cursor-pointer rounded-full translate-x-[-50%] translate-y-[-50%] duration-150`} style={{backgroundColor: element.color}} onClick={()=>{
-                                        const copyCategory = category.map((item, subIndex)=>{
-                                            item.isActive = false;
-                                            if(index === subIndex){
-                                                item.isActive = !item.isActive;
-                                            }
-                                            return item;
-                                        });
-                                        setCategory(copyCategory);
+                                        categoryActiveChange(index);
                                     }}></button>
                                 </li>)
                             })}
                         </ul>
                         <input type="text" className="w-[9.375vw] mx-[0.833vw] mt-[0.26vw] mb-[0.729vw] text-[#000000] text-[0.729vw]" value={categoryIsActive !== undefined ? categoryIsActive.name : undefined} onChange={(event) => {
-                            const copyCategory = [...category];
-
-                            const changeName = copyCategory.map((element)=>{
-                                if(element.isActive){
-                                    element.name = event.target.value;
-                                }
-                                return element;
-                            })
-                            setCategory(changeName);
+                            categoryNameChange(event.target.value);
                         }}/>
                     </div>
                 </div>
@@ -317,7 +279,7 @@ export default function List(){
         </form>
         {/* 리스트 */}
         <ul className="pt-[0.521vw]">
-            {todayData.length >= 1 ? todayData[0].list.map((element, index)=>{
+            {todayData !== undefined ? todayData.list.map((element, index)=>{
                 if(!element.isDeleted){
                     const useObject = category.find((item)=>item.id === element.categoryID);
 
@@ -338,6 +300,8 @@ export default function List(){
 
                                     if(deleteQuestion){
                                         //확인 버튼을 눌렀을 경우
+                                        console.log(element);
+                                        mathImsub(element);
                                         deleteItem(element.id);
                                     }else {
                                         //취소 버튼을 눌렀을 경우
