@@ -55,30 +55,78 @@ export default function Group(){
                     {Object.keys(dateGroup).map((key,index)=>{
                         const typekey = key as keyof (typeof dateGroup);
                         const groupType = dateGroup[typekey];
-                        return (<li key={index} className="w-[11.25vw] rounded-[2.083vw] bg-[rgba(255,255,255,.8)]">
+                        return (<li key={index} className="w-[240px] rounded-[2.083vw] bg-[rgba(255,255,255,.8)]">
                             <h5 className="block px-[1.042vw] pt-[0.833vw] text-[#3F3F3F] text-[2.083vw] text-right box-border">{groupType?.koreaName}</h5>
                             {/* 수입 지출 wrap */}
-                            <ul className="pt-[1.25vw] pb-[1.25vw] grid gap-[1.042vw] grid-cols-2 px-[1.25vw] box-border">
-                                {groupType ? Object.keys(groupType.moneyType).map((depthKey, index)=>{
+                            <ul className="pt-[1.25vw] pb-[1.25vw] grid gap-[0.833vw] grid-cols-2 px-[1.25vw] box-border">
+                                {groupType ? Object.keys(groupType.moneyType).map((depthKey, subIndex)=>{
                                     const moneyKey = depthKey as keyof (typeof groupType.moneyType);
 
-                                    return(<li key={index}>
+                                    //250708 확인 필요 start
+                                    //이번달, 저번달 배열 내용 string -> number 타입으로 변환
+                                    let processedArr: number[] = [];
+                                    if(Array.isArray(groupType.moneyType[moneyKey].money) && (typekey === "thisMonth" || typekey === "lastMonth")){
+                                        //money 가 배열이고, typeKey 가 thisMonth 거나 lastMonth 일 경우
+                                        processedArr = groupType.moneyType[moneyKey].money?.map(item => {
+                                            if (typeof item === 'string') {
+                                                // 쉼표 제거 후 숫자로 변환
+                                                return Number(item.replace(/,/g, ''));
+                                            }
+                                            return item; // 문자열이 아니면 그대로 반환
+                                        });
+                                        console.log(typekey, groupType.moneyType[moneyKey].money, processedArr)
+                                    }
+
+                                    /*
+                                    * type string 을 number 로 변환하여 입력
+                                    * 1. 들어오는 type 은 항상 string
+                                    * 2. number[] 로 변환, 콤마 제거, Number() 합
+                                    *
+                                    * 3. 들어오는 항목마다 string 이기 때문에 항상 2번으로 돌아가야함
+                                    * 4. groupType.moneyType[moneyKey].money 사용 불가
+                                    * 5. 항상 다른 배열로 ....
+                                    *
+                                    * 6. 합산 후 type string , 콤마 추가
+                                    * */
+
+
+                                    const allSum = [];
+                                    /*
+                                    * { groupType: "thisMonth", income:number(합산 금액), export:number(합산 금액) }
+                                    * 1. allSum 내부에 groupType:thisMonth 가 없다면
+                                    *   1-1.  객체 삽입 기본값 { groupType: "thisMonth", income:0, export:0 }
+                                    * 2. 내부에 있다면
+                                    *   2-1. 해당 객체 income or export 에 계산된 값으로 변경
+                                    * 3. 내부에 있으나, date 값이 변경되었을 경우
+                                    *   3-1. 내부 내용 교체 date / income & export 초기화
+                                    *
+                                    * */
+                                    //250708 확인 필요 end
+
+                                    return(<li key={subIndex}>
                                         {/* 카테고리 */}
                                         <div className="h-[10px] flex gap-[5px]">
-                                            {groupType.moneyType[moneyKey].category !== null ? groupType.moneyType[moneyKey].category?.map((element, subIndex)=>{
+                                            {groupType.moneyType[moneyKey].category !== null ? groupType.moneyType[moneyKey].category?.map((element, inIndex)=>{
                                                 //element.id === category.id 일 경우 color 가져오기
                                                 const findColor = category.find((item)=>item.id === element.id);
-                                                return (<span key={subIndex} className="block w-[10px] h-[100%] rounded-full bg-[#000]" style={{backgroundColor:findColor !== undefined ? findColor.color : undefined}}>
+                                                return (<span key={inIndex} className="block w-[10px] h-[100%] rounded-full bg-[#000]" style={{backgroundColor:findColor !== undefined ? findColor.color : undefined}}>
                                                 </span>)
                                             }) : null}
                                         </div>
                                         {/* 금액 */}
-                                        <p className={`${activePalette[moneyKey].text} text-[1.042vw] text-right`}>
-                                            {/* TODO:: 저번달 확인 필요, 월간/지난달 0 일 때 표기 확인 */}
-                                            {Array.isArray(groupType.moneyType[moneyKey].money) && groupType.moneyType[moneyKey].money !== null ?
-                                                groupType.moneyType[moneyKey].money.reduce((accumulator, currentValue) => accumulator + currentValue, 0,) :
-                                                !Array.isArray(groupType.moneyType[moneyKey].money) ?
-                                                    groupType.moneyType[moneyKey].money : ""}원</p>
+                                        <p className={`${activePalette[moneyKey].text} text-right`}>
+                                            <span className="w-[65px] inline-block align-bottom group overflow-hidden text-[1.042vw]">
+                                                <span className="inline-block duration-1000 group-hover:translate-x-[-50%]">
+                                                    {/* TODO:: 저번달 확인 필요, */}
+                                                    {Array.isArray(groupType.moneyType[moneyKey].money) && (typekey === "thisMonth" || typekey === "lastMonth") ?
+                                                        processedArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0) :
+                                                        !Array.isArray(groupType.moneyType[moneyKey].money) ?
+                                                            groupType.moneyType[moneyKey].money : 0}
+                                                </span>
+                                            </span>
+                                            <span className="inline-block text-[14px] align-bottom ml-[5px]">원</span>
+                                        </p>
+
                                     </li>)
                                 }) : null}
                             </ul>

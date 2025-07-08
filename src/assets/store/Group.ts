@@ -23,10 +23,10 @@ interface DateGroupType<T> {
 }
 interface DateGroup {
     total: {
-        today: DateGroupType<number>;
-        week:DateGroupType<number>;
-        thisMonth: DateGroupType<number[]>;
-        lastMonth?:DateGroupType<number[]>;
+        today: DateGroupType<string>;
+        week:DateGroupType<string>;
+        thisMonth: DateGroupType<string[]>;
+        lastMonth?:DateGroupType<string[]>;
     }
     initUpdate: (todayTime:string)=> void;
     mathSum: (todayTime:string, saveField:SaveField)=> void;
@@ -246,16 +246,20 @@ export const useDateGroupStore = create<DateGroup>((set) => ({
             }
 
             //TODO:: 오늘, 주간, 이번달 += 하면 콤마 삽입 작업
+            //TODO :: 콤마 삽입 후 금액 텍스트 ... 말줄임 작업(선택) 및 hover 했을 때 텍스트 흘러나오도록 작업(내용이 넘쳤을 경우에만 작동하도록)
             //오늘
             if(copyTotal.today.date === todayTime && copyTotal.today.date !== ""){
                 //일치하는 경우
-
                 const typeKey = activeKey as keyof typeof copyTotal.today.moneyType;
                 //moneyType[].money = saveField.money
                 if(copyTotal.today.moneyType[typeKey].money !== null){
-                    copyTotal.today.moneyType[typeKey].money += Number(moneyCommaRemove);
+                    //값 내부가 null 이 아닐 경우
+                    const mathMoney = Number(copyTotal.today.moneyType[typeKey].money.replace(/,/g, "")) + Number(moneyCommaRemove); //콤마 제거한 saveField.money 내용 합산
+                    copyTotal.today.moneyType[typeKey].money = mathMoney?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") ?? null; //해당 내용에 콤마 삽입
                 }else {
-                    copyTotal.today.moneyType[typeKey].money = Number(moneyCommaRemove);
+                    //null 일 경우
+                    //type string 에 string 내용 삽입
+                    copyTotal.today.moneyType[typeKey].money = saveField.money?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") ?? null;
                 }
                 //카테고리
                 categoryLogic("today", typeKey);
@@ -279,11 +283,13 @@ export const useDateGroupStore = create<DateGroup>((set) => ({
             if(copyTotal.week.date === week && copyTotal.week.date !== null){
                 //일치하는 경우
                 const typeKey = activeKey as keyof typeof total.week.moneyType;
+                const weekMoney = copyTotal.week.moneyType[typeKey].money;
                 //moneyType[].money = saveField.money
-                if(copyTotal.week.moneyType[typeKey].money !== null){
-                    copyTotal.week.moneyType[typeKey].money += Number(moneyCommaRemove);
+                if(weekMoney !== null){
+                    const mathMoney = Number(weekMoney.replace(/,/g, "")) + Number(moneyCommaRemove); //콤마 제거한 saveField.money 내용 합산
+                    copyTotal.week.moneyType[typeKey].money = mathMoney?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") ?? null; //해당 내용에 콤마 삽입
                 }else {
-                    copyTotal.week.moneyType[typeKey].money = Number(moneyCommaRemove);
+                    copyTotal.week.moneyType[typeKey].money = saveField.money?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") ?? null;
                 }
                 categoryLogic("week", typeKey);
             }else {
@@ -306,12 +312,22 @@ export const useDateGroupStore = create<DateGroup>((set) => ({
             if(copyTotal.thisMonth.date === month && copyTotal.thisMonth.date !== null){
                 //일치하는 경우
                 const typeKey = activeKey as keyof typeof copyTotal.thisMonth.moneyType;
-                //moneyType[].money = saveField.money
+
                 if(copyTotal.thisMonth.moneyType[typeKey].money !== null){
-                    if(copyTotal.thisMonth.moneyType[typeKey].money.length < allWeek){
-                        copyTotal.thisMonth.moneyType[typeKey].money = new Array(allWeek).fill(0);
+                    //null이 아닐 경우
+
+                    if(copyTotal.thisMonth.moneyType[typeKey].money.length === 0) {
+                        //월 주차만큼 배열 내부에 생성되어있지 않을 경우
+                        //배열 내에 주차 갯수만큼 0으로 채우기
+                        if (copyTotal.thisMonth.moneyType[typeKey].money.length < allWeek) {
+                            copyTotal.thisMonth.moneyType[typeKey].money = new Array(allWeek).fill("");
+                        }
+                        //가져온 값 삽입
+                        copyTotal.thisMonth.moneyType[typeKey].money[week - 1] = String(saveField.money);
+                    }else {
+                        const mathMoney = Number(copyTotal.thisMonth.moneyType[typeKey].money[week - 1]?.replace(/,/g, "")) + Number(moneyCommaRemove); //콤마 제거한 saveField.money 내용 합산
+                        copyTotal.thisMonth.moneyType[typeKey].money[week - 1] = mathMoney?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") ?? null; //해당 내용에 콤마 삽입
                     }
-                    copyTotal.thisMonth.moneyType[typeKey].money[week - 1] += Number(moneyCommaRemove);
                 }
                 categoryLogic("thisMonth", typeKey)
             }else {
@@ -371,11 +387,21 @@ export const useDateGroupStore = create<DateGroup>((set) => ({
 
             if((trueActiveButton !== undefined) && copyTotal.today.moneyType[typeKey].money !== null && copyTotal.week.moneyType[typeKey].money !== null && copyTotal.thisMonth.moneyType[typeKey].money !== null){
                 //수입 or 수출에 active 되어있다면
-                copyTotal.today.moneyType[typeKey].money -= Number(moneyCommaRemove);
-                copyTotal.week.moneyType[typeKey].money -= Number(moneyCommaRemove);
-                copyTotal.thisMonth.moneyType[typeKey].money[week - 1] -= Number(moneyCommaRemove);
+                //type string이기 때문에 콤마 제거 후 계산, 그리고 내용 삽입
 
-                if(copyTotal.today.moneyType[typeKey].money === 0){
+                //오늘
+                const todayMath = Number(copyTotal.today.moneyType[typeKey].money.replace(/,/g, "")) - Number(moneyCommaRemove);
+                copyTotal.today.moneyType[typeKey].money = todayMath.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") ?? null;
+
+                //주간w sad
+                const weekMath = Number(copyTotal.week.moneyType[typeKey].money.replace(/,/g, "")) - Number(moneyCommaRemove);
+                copyTotal.week.moneyType[typeKey].money = weekMath.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") ?? null;
+
+                //이번달
+                const thisMonthMath = Number(copyTotal.thisMonth.moneyType[typeKey].money[week - 1].replace(/,/g, "")) - Number(moneyCommaRemove);
+                copyTotal.thisMonth.moneyType[typeKey].money[week - 1] = thisMonthMath.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") ?? null;
+
+                if(copyTotal.today.moneyType[typeKey].money === "0"){
                     //!!! 타입 확인
                     //copyTotal.today.moneyType[typeKey].money = "";
                 }
