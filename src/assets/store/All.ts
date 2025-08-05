@@ -1,5 +1,41 @@
 import { create } from 'zustand';
 
+interface MobileTab {
+    id:number;
+    koreaName:string;
+    iconURL:string;
+    isView:boolean;
+}
+interface MobileTabStore {
+    tab:MobileTab[],
+    isView:(id:number)=>void;
+}
+export const useMobileTabStore = create<MobileTabStore>((set)=>({
+    tab: [
+        {
+            id:0,
+            koreaName:"오늘의 내역",
+            iconURL:"",
+            isView:true,
+        },
+        {
+            id:1,
+            koreaName:"모아 보기",
+            iconURL:"",
+            isView:false,
+        },
+    ],
+    isView: (id)=>{
+        set((state)=>{
+            const tab = state.tab;
+            const copyTab = tab.map((element)=>{
+                element.isView = element.id === id;
+                return element
+            });
+            return {tab: copyTab}
+        })
+    }
+}));
 export const useActivePaletteStore = create(() => ({
     palette : {
         income: {

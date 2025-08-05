@@ -1,5 +1,5 @@
-import { useDateGroupStore } from "../store/Group.ts";
-import {useActivePaletteStore, useCategoryStore} from "../store/All.ts";
+import {useCategoryGroupStore, useDateGroupStore} from "../store/Group.ts";
+import {useActivePaletteStore, useCategoryStore, useMobileTabStore} from "../store/All.ts";
 import {useState} from "react";
 
 interface BigGroup {
@@ -8,11 +8,13 @@ interface BigGroup {
 }
 export default function Group(){
     //ALL.tsx
+    const mobileTabView = useMobileTabStore((state) => state.tab);
     const activePalette = useActivePaletteStore((state) => state.palette);
     const category = useCategoryStore((state) => state.list);
 
     //Group.tsx
     const dateGroup = useDateGroupStore((state) => state.total);
+    const categoryGroup = useCategoryGroupStore((state) => state.total);
 
     const [bigGroup, setBigGroup] = useState<BigGroup[]>([
         {
@@ -24,16 +26,19 @@ export default function Group(){
             isActive:false,
         },
     ]);
-
-
-    //들어오자마자, 월별 확인, ㅇ
+    //모바일 isView 관련
+    const findView = mobileTabView.find((element)=>element.isView);
 
     return (
-        <div className="mr-[1.042vw]">
+        <div className={`${findView?.id === 1 ? "block" : "hidden"} mr-[5.333vw] sm:mr-[2.604vw] md:block md:mr-[1.042vw]`}>
             {/* 탭 */}
-            <ul className="flex gap-[0.521vw]">
+            <ul className="flex gap-[2.667vw] sm:gap-[1.302vw] md:gap-[0.521vw]">
                 {bigGroup.map((element, index) => {
-                    return (<li key={index} className={`px-[1.042vw] py-[0.625vw] rounded-[2.083vw] shadow-lg text-[0.833vw] ${element.isActive ? "text-[#fff] bg-[#FF5858]" : "text-[#000] bg-[#fff]"}`}>
+                    return (<li key={index} className={`
+                        px-[5.333vw] py-[3.2vw] rounded-[10.667vw] shadow-lg text-[4.267vw] ${element.isActive ? "text-[#fff] bg-[#FF5858]" : "text-[#000] bg-[#fff]"}
+                        sm:px-[2.604vw] sm:py-[1.563vw] sm:rounded-[5.208vw] sm:text-[2.083vw]
+                        md:px-[1.042vw] md:py-[0.625vw] md:rounded-[2.083vw] md:text-[0.833vw]
+                    `}>
                         <button type="button" className="cursor-pointer" onClick={()=>{
                             const copyBigGroup = bigGroup.map((item)=>{
                                 item.isActive = false;
@@ -49,23 +54,38 @@ export default function Group(){
                 })}
             </ul>
             {/* 그룹 wrap */}
-            <div className="pt-[1.25vw]">
+            <div className="pt-[6.4vw] sm:pt-[3.125vw] md:pt-[1.25vw]">
                 {/* 날짜순 */}
-                <ul className={`${bigGroup[0].isActive ? "grid" : "hidden"} grid-cols-2 gap-[1.042vw]`}>
+                <ul className={`${bigGroup[0].isActive ? "grid" : "hidden"} grid-cols-2 gap-[5.333vw] sm:gap-[2.604vw] md:gap-[1.042vw]`}>
                     {Object.keys(dateGroup).map((key,index)=>{
                         const typekey = key as keyof (typeof dateGroup);
                         const groupType = dateGroup[typekey];
-                        return (<li key={index} className="w-[240px] rounded-[2.083vw] bg-[rgba(255,255,255,.8)]">
-                            <h5 className="block px-[1.042vw] pt-[0.833vw] text-[#3F3F3F] text-[2.083vw] text-right box-border">{groupType?.koreaName}</h5>
+                        return (<li key={index} className="
+                            w-[12.5vw] rounded-[10.667vw] bg-[rgba(255,255,255,.8)]
+                            sm:w-[12.5vw] sm:rounded-[5.208vw]
+                            md:w-[12.5vw] md:rounded-[2.083vw]
+                        ">
+                            <h5 className="
+                                block px-[5.333vw] pt-[4.267vw] text-[#3F3F3F] text-[10.667vw] text-right box-border
+                                sm:px-[2.604vw] sm:pt-[2.083vw] sm:text-[5.208vw]
+                                md:px-[1.042vw] md:pt-[0.833vw] md:text-[2.083vw]
+                            ">{groupType?.koreaName}</h5>
                             {/* 수입 지출 wrap */}
-                            <ul className="pt-[1.25vw] pb-[1.25vw] grid gap-[0.833vw] grid-cols-2 px-[1.25vw] box-border">
+                            <ul className="
+                                pt-[6.4vw] pb-[6.4vw] grid gap-[0.833vw] grid-cols-2 px-[6.4vw] box-border
+                                sm:pt-[3.125vw] sm:pb-[3.125vw] sm:gap-[0.833vw] sm:px-[3.125vw]
+                                md:pt-[1.25vw] md:pb-[1.25vw] md:gap-[0.833vw] md:px-[1.25vw]
+                            ">
                                 {groupType ? Object.keys(groupType.moneyType).map((depthKey, subIndex)=>{
                                     const moneyKey = depthKey as keyof (typeof groupType.moneyType);
 
-                                    //250708 확인 필요 start
                                     //이번달, 저번달 배열 내용 string -> number 타입으로 변환
                                     let processedArr: number[] = [];
                                     if(Array.isArray(groupType.moneyType[moneyKey].money) && (typekey === "thisMonth" || typekey === "lastMonth")){
+
+
+
+
                                         //money 가 배열이고, typeKey 가 thisMonth 거나 lastMonth 일 경우
                                         processedArr = groupType.moneyType[moneyKey].money?.map(item => {
                                             if (typeof item === 'string') {
@@ -75,6 +95,10 @@ export default function Group(){
                                             return item; // 문자열이 아니면 그대로 반환
                                         });
                                         console.log(typekey, groupType.moneyType[moneyKey].money, processedArr)
+
+
+
+                                            //.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
                                     }
 
                                     /*
@@ -90,7 +114,6 @@ export default function Group(){
                                     * */
 
 
-                                    const allSum = [];
                                     /*
                                     * { groupType: "thisMonth", income:number(합산 금액), export:number(합산 금액) }
                                     * 1. allSum 내부에 groupType:thisMonth 가 없다면
@@ -103,28 +126,42 @@ export default function Group(){
                                     * */
                                     //250708 확인 필요 end
 
+                                    const allSum = Array.isArray(groupType.moneyType[moneyKey].money) && (typekey === "thisMonth" || typekey === "lastMonth") ?
+                                        processedArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0) :
+                                        !Array.isArray(groupType.moneyType[moneyKey].money) && groupType.moneyType[moneyKey].money !== null ?
+                                            groupType.moneyType[moneyKey].money : 0;
+
                                     return(<li key={subIndex}>
                                         {/* 카테고리 */}
-                                        <div className="h-[10px] flex gap-[5px]">
+                                        <div className="
+                                            h-[2.667vw] flex gap-[1.333vw]
+                                            sm:h-[1.302vw] sm:gap-[0.651vw]
+                                            md:h-[0.521vw] md:gap-[0.26vw]
+                                        ">
                                             {groupType.moneyType[moneyKey].category !== null ? groupType.moneyType[moneyKey].category?.map((element, inIndex)=>{
                                                 //element.id === category.id 일 경우 color 가져오기
                                                 const findColor = category.find((item)=>item.id === element.id);
-                                                return (<span key={inIndex} className="block w-[10px] h-[100%] rounded-full bg-[#000]" style={{backgroundColor:findColor !== undefined ? findColor.color : undefined}}>
+                                                return (<span key={inIndex} className="block w-[2.667vw] h-[100%] rounded-full bg-[#000] sm:w-[1.302vw] md:w-[0.521vw]" style={{backgroundColor:findColor !== undefined ? findColor.color : undefined}}>
                                                 </span>)
                                             }) : null}
                                         </div>
                                         {/* 금액 */}
                                         <p className={`${activePalette[moneyKey].text} text-right`}>
-                                            <span className="w-[65px] inline-block align-bottom group overflow-hidden text-[1.042vw]">
+                                            <span className="
+                                                w-[17.333vw] inline-block align-bottom group overflow-hidden text-[5.333vw]
+                                                sm:w-[8.464vw] sm:text-[2.604vw]
+                                                md:w-[3.385vw] md:text-[1.042vw]
+                                            ">
                                                 <span className="inline-block duration-1000 group-hover:translate-x-[-50%]">
                                                     {/* TODO:: 저번달 확인 필요, */}
-                                                    {Array.isArray(groupType.moneyType[moneyKey].money) && (typekey === "thisMonth" || typekey === "lastMonth") ?
-                                                        processedArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0) :
-                                                        !Array.isArray(groupType.moneyType[moneyKey].money) ?
-                                                            groupType.moneyType[moneyKey].money : 0}
+                                                    {allSum?.toLocaleString()}
                                                 </span>
                                             </span>
-                                            <span className="inline-block text-[14px] align-bottom ml-[5px]">원</span>
+                                            <span className="
+                                                inline-block ml-[1.333vw] text-[3.733vw] align-bottom
+                                                sm:ml-[0.651vw] sm:text-[1.823vw]
+                                                md:ml-[0.26vw] md:text-[0.729vw]
+                                            ">원</span>
                                         </p>
 
                                     </li>)
@@ -135,7 +172,59 @@ export default function Group(){
                 </ul>
                 {/* 카테고리순 */}
                 <ul className={`${bigGroup[1].isActive ? "grid" : "hidden"} grid-cols-2 gap-[1.042vw]`}>
-                    <li className="w-[11.25vw] rounded-[2.083vw] bg-[rgba(255,255,255,.8)]"></li>
+                    {categoryGroup.map((key, index)=>{
+
+                        return (<li key={index} className="w-[12.5vw] rounded-[10.667vw] bg-[rgba(255,255,255,.8)]
+                            sm:w-[12.5vw] sm:rounded-[5.208vw]
+                            md:w-[12.5vw] md:rounded-[2.083vw]" style={{backgroundImage:`linear-gradient(180deg, ${key.color}, transparent)`}}>
+                            <h5 className="
+                                block mx-[5.333vw] pt-[4.267vw] text-[#3F3F3F] text-[6.4vw] text-right box-border overflow-hidden
+                                sm:mx-[2.604vw] sm:pt-[2.083vw] sm:text-[3.125vw]
+                                md:mx-[1.042vw] md:pt-[0.833vw] md:text-[1.25vw]
+                            "><span className="whitespace-pre" style={{color:key.color === "#030417" ? "white" : "inherit"}}>{key.koreaName}</span></h5>
+                            {/* 수입 지출 wrap */}
+                            <ul className="
+                                pt-[6.4vw] pb-[6.4vw] grid gap-[0.833vw] grid-cols-2 px-[6.4vw] box-border
+                                sm:pt-[3.125vw] sm:pb-[3.125vw] sm:gap-[0.833vw] sm:px-[3.125vw]
+                                md:pt-[1.25vw] md:pb-[1.25vw] md:gap-[0.833vw] md:px-[1.25vw]
+                            ">
+                                <li>
+                                    {/* 수입 금액 */}
+                                    <p className={`${activePalette.income.text} text-right`}>
+                                        <span className="
+                                            w-[17.333vw] inline-block align-bottom group overflow-hidden text-[5.333vw]
+                                            sm:w-[8.464vw] sm:text-[2.604vw]
+                                            md:w-[3.385vw] md:text-[1.042vw]
+                                        ">
+                                            <span className="inline-block duration-1000 group-hover:translate-x-[-50%]">{key.incomeMoney}</span>
+                                        </span>
+                                        <span className="
+                                            inline-block ml-[1.333vw] text-[3.733vw] align-bottom
+                                            sm:ml-[0.651vw] sm:text-[1.823vw]
+                                            md:ml-[0.26vw] md:text-[0.729vw]
+                                        ">원</span>
+                                    </p>
+                                </li>
+                                <li>
+                                    {/* 지출 금액 */}
+                                    <p className={`${activePalette.export.text} text-right`}>
+                                        <span className="
+                                            w-[17.333vw] inline-block align-bottom group overflow-hidden text-[5.333vw]
+                                            sm:w-[8.464vw] sm:text-[2.604vw]
+                                            md:w-[3.385vw] md:text-[1.042vw]
+                                        ">
+                                            <span className="inline-block duration-1000 group-hover:translate-x-[-50%]">{key.exportMoney}</span>
+                                        </span>
+                                        <span className="
+                                            inline-block ml-[1.333vw] text-[3.733vw] align-bottom
+                                            sm:ml-[0.651vw] sm:text-[1.823vw]
+                                            md:ml-[0.26vw] md:text-[0.729vw]
+                                        ">원</span>
+                                    </p>
+                                </li>
+                            </ul>
+                        </li>)
+                    })}
                     <li></li>
                     <li></li>
                     <li></li>

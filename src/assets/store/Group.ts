@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import moment from 'moment';
-import type { SaveField } from "../component/List.tsx";
+import type { SaveField, PushData } from "../component/List.tsx";
 import type { DateListType } from "../store/List.tsx";
 
 
@@ -245,8 +245,6 @@ export const useDateGroupStore = create<DateGroup>((set) => ({
                 }
             }
 
-            //TODO:: 오늘, 주간, 이번달 += 하면 콤마 삽입 작업
-            //TODO :: 콤마 삽입 후 금액 텍스트 ... 말줄임 작업(선택) 및 hover 했을 때 텍스트 흘러나오도록 작업(내용이 넘쳤을 경우에만 작동하도록)
             //오늘
             if(copyTotal.today.date === todayTime && copyTotal.today.date !== ""){
                 //일치하는 경우
@@ -464,23 +462,62 @@ interface CategoryGroupType {
 }
 interface CategoryGroup {
     total: CategoryGroupType[];
-    update: ()=> void;
+    updateInfo: (pushArray:PushData[])=> void;
     mathSum: ()=> void;
 }
 
 //카테고리순 store
 export const useCategoryGroupStore = create<CategoryGroup>((set) => ({
-    total: [],
-    update: ()=> set((state)=>{
-        //페이지 첫 진입 시 All.ts에 있는 category 확인 후 객체 삽입
-        /*{
+    total: [
+        {
             id:0,
-            color:"",
-            koreaName:"",
+            color:"#FFA742",
+            koreaName:"기본 카테고리1",
             incomeMoney:0,
             exportMoney:0,
-        }*/
-        return state
+        },
+        {
+            id:1,
+            color:"#9EF284",
+            koreaName:"기본 카테고리2",
+            incomeMoney:0,
+            exportMoney:0,
+        },
+        {
+            id:2,
+            color:"#B560F5",
+            koreaName:"기본 카테고리3",
+            incomeMoney:0,
+            exportMoney:0,
+        },
+        {
+            id:3,
+            color:"#030417",
+            koreaName:"기본 카테고리4",
+            incomeMoney:0,
+            exportMoney:0,
+        }
+    ],
+    updateInfo: (pushArray)=> set((state)=>{
+        //name이 변경되었을 경우 변경
+        const total = state.total;
+
+        const copyTotal = total.map((element, index)=>{
+            //가져온 배열객체.id 와 state.total.id를 대조
+            if(element.id === pushArray[index].id && element.koreaName === pushArray[index].koreaName){
+                //id가 같고 koreaName 이 같을 경우 패스
+                console.info("변경될 내용 없음");
+            }else {
+                //name 변경
+                console.log("다름", element);
+                element.koreaName = pushArray[index].koreaName;
+
+                return element;
+            }
+            return element;
+        });
+
+        return {total:copyTotal};
     }),
     mathSum: () =>
         set((state) => {
