@@ -65,9 +65,11 @@ export default function List(){
 
     //group.tsx
     const initUpdate = useDateGroupStore((state) => state.initUpdate);
-    const mathSum = useDateGroupStore((state) => state.mathSum);
-    const mathImsub = useDateGroupStore((state) => state.mathImsub);
+    const dateMathSum = useDateGroupStore((state) => state.mathSum);
+    const dateMathImsub = useDateGroupStore((state) => state.mathImsub);
     const updateInfo = useCategoryGroupStore((state) => state.updateInfo);
+    const categoryMathSum = useCategoryGroupStore((state) => state.mathSum);
+    const categoryMathImsub = useCategoryGroupStore((state) => state.mathImsub);
 
     //클릭하는 타입들 useState
     const [clickType, setClickType] = useState({
@@ -161,6 +163,7 @@ export default function List(){
                 * 1. 수입 or 지출 하나의 버튼에라도 true가 있을 경우
                 * 2. changeInput.money가 null이 아닌경우
                 * */
+                console.log(copySaveField)
                 copySaveField.id += 1;
                 copySaveField.typeButton.income.isActive = clickType.typeButton.income.isActive;
                 copySaveField.typeButton.export.isActive = clickType.typeButton.export.isActive;
@@ -170,7 +173,8 @@ export default function List(){
                 setSaveField(copySaveField);
                 listArrangement(copySaveField); //List.tsx로 이동
 
-                mathSum(todayTime, copySaveField);
+                dateMathSum(todayTime, copySaveField);
+                categoryMathSum(todayTime, copySaveField);
 
                 /* 1.보내기 성공 후 값 초기화
                     1-1. copySaveField.typeButton
@@ -371,16 +375,16 @@ export default function List(){
                             <p className={`${element.activeButton.income ? activePalette.income.text : activePalette.export.text } text-[4.267vw] sm:text-[2.083vw] md:text-[0.833vw]`}>{element.money}원</p>
                             <div className="ml-[2.667vw] sm:ml-[1.302vw] md:ml-[0.521vw]">
                                 <button type="button" className="
-                                    w-[7.467vw] block cursor-pointer rounded-[40px] text-[#8F8F8F] text-[3.733vw] duration-150 hover:text-[#000000] hover:bg-[#e5e5e5]
-                                    sm:w-[3.646vw] sm:text-[1.823vw]
-                                    md:w-[1.458vw] md:text-[0.729vw]
+                                    w-[7.467vw] block cursor-pointer rounded-[10.667vw] text-[#8F8F8F] text-[3.733vw] duration-150 hover:text-[#000000] hover:bg-[#e5e5e5]
+                                    sm:w-[3.646vw] sm:text-[1.823vw] sm:rounded-[5.208vw]
+                                    md:w-[1.458vw] md:text-[0.729vw] md:rounded-[2.083vw]
                                 " onClick={()=>{
                                     const deleteQuestion = confirm("정말 삭제하시겠습니까?");
 
                                     if(deleteQuestion){
                                         //확인 버튼을 눌렀을 경우
-                                        console.log(element);
-                                        mathImsub(element);
+                                        dateMathImsub(element);
+                                        categoryMathImsub(element);
                                         deleteItem(element.id);
                                     }else {
                                         //취소 버튼을 눌렀을 경우

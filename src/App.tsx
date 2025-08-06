@@ -13,9 +13,9 @@ function App() {
         ">
             <Group></Group>
             <List></List>
-            <div className="w-[100%] pb-[2.604vw] box-border md:hidden">
+            <div className="w-[100%] fixed bottom-[2.604vw] left-0 px-[3.125vw] box-border md:hidden">
                 <ul className="
-                   flex rounded-[5.208vw] bg-[#fff]
+                   w-[100%] flex border border-[#E9E9E9] rounded-[5.208vw] bg-[#fff] shadow-lg
                 ">
                     {mobileTabView.map((element, index) => {
                         return (<li key={index} className="w-[50%] mx-[0.781vw] my-[0.521vw] rounded-[5.208vw] overflow-hidden">

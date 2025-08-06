@@ -457,45 +457,48 @@ interface CategoryGroupType {
     id:number;
     color:string;
     koreaName:string;
-    incomeMoney:number;
-    exportMoney:number;
+    incomeMoney:string;
+    exportMoney:string;
 }
 interface CategoryGroup {
+    date: string | null;
     total: CategoryGroupType[];
     updateInfo: (pushArray:PushData[])=> void;
-    mathSum: ()=> void;
+    mathSum: (todayTime:string, saveField:SaveField)=> void;
+    mathImsub: (todayData: DateListType)=> void;
 }
 
 //카테고리순 store
 export const useCategoryGroupStore = create<CategoryGroup>((set) => ({
+    date:null,
     total: [
         {
             id:0,
             color:"#FFA742",
             koreaName:"기본 카테고리1",
-            incomeMoney:0,
-            exportMoney:0,
+            incomeMoney:"0",
+            exportMoney:"0",
         },
         {
             id:1,
             color:"#9EF284",
             koreaName:"기본 카테고리2",
-            incomeMoney:0,
-            exportMoney:0,
+            incomeMoney:"0",
+            exportMoney:"0",
         },
         {
             id:2,
             color:"#B560F5",
             koreaName:"기본 카테고리3",
-            incomeMoney:0,
-            exportMoney:0,
+            incomeMoney:"0",
+            exportMoney:"0",
         },
         {
             id:3,
             color:"#030417",
             koreaName:"기본 카테고리4",
-            incomeMoney:0,
-            exportMoney:0,
+            incomeMoney:"0",
+            exportMoney:"0",
         }
     ],
     updateInfo: (pushArray)=> set((state)=>{
@@ -519,8 +522,104 @@ export const useCategoryGroupStore = create<CategoryGroup>((set) => ({
 
         return {total:copyTotal};
     }),
-    mathSum: () =>
+    mathSum: (todayTime, saveField) =>
         set((state) => {
-            return state
+            const date = state.date;
+            const total = state.total;
+
+            console.log(todayTime.split("-")[1])
+
+            let newDate: string|null = null;
+            let copyTotal = [...total];
+
+            if(date !== null && date !== todayTime.split("-")[1]){
+                //값이 있으나 가져온 값과 다를 경우
+                //date 값 변경
+                newDate = todayTime.split("-")[1];
+
+                //카테고리순 초기화
+                copyTotal = total.map((element)=>{
+                    element.incomeMoney = "0";
+                    element.exportMoney = "0";
+                    return element;
+                });
+            }else {
+                //값이 없거나 / 값이 있고 가져온 값과 같을 경우
+                if(date === null){
+                    //값이 없을 경우 삽입
+                    newDate = todayTime.split("-")[1];
+                }
+
+                //isActive:true 인 key 값 확인 변수
+                const activeKey = Object.keys(saveField.typeButton).find((key) => {
+                    const typedKey = key as keyof typeof saveField.typeButton;
+                    return saveField.typeButton[typedKey].isActive;
+                });
+
+                if(saveField.category.id !== null){
+                    //SaveField category.id 값이 null이 아닐 경우
+                    copyTotal = total.map((element)=>{
+                        if(saveField.category.id === element.id){
+                            //가져온 값.category.id 와 element.id 가 동일할 경우
+                            if(activeKey === "income"){
+                                //수입
+                                const mathMoney = Number(element.incomeMoney?.replace(/,/g, "")) + Number(saveField.money?.replace(/,/g, ""));//쉼표(콤마) 제거
+                                element.incomeMoney = mathMoney?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") ?? null;//합산한 값에 쉼표(콤마) 삽입
+                            }else if(activeKey === "export"){
+                                //지출
+                                const mathMoney = Number(element.exportMoney?.replace(/,/g, "")) + Number(saveField.money?.replace(/,/g, ""));//쉼표(콤마) 제거
+                                element.exportMoney = mathMoney?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") ?? null;//합산한 값에 쉼표(콤마) 삽입
+                            }else{
+                                //확인 불가
+                            }
+                            return element;
+                        }
+                        return element;
+                    })
+                }
+            }
+
+            /*
+            * 1. state.map(element.id)를 확인하여 가져온 category.id와 같은 게 있는 지 확인
+            * 2. 같은 게 있을 경우 해당 객체에 값 합산
+            *       2-1. SaveField.typeButton 내부 확인 후 true 있는지 확인
+            *       2-2. true 값 가져와서 element 내부 알맞은 Money에 합산
+            *
+            * */
+            return {date:newDate, total:copyTotal};
         }),
+    mathImsub:(todayData)=>set((state)=>{
+        const total = state.total;
+
+        //true 인 key 값 확인 변수
+        const activeKey = Object.keys(todayData.activeButton).find(() => todayData.activeButton);
+        let copyTotal = [...total];
+
+        if(todayData.categoryID !== null){
+            //categoryID 가 있을 경우
+            copyTotal = total.map((element)=>{
+                if(element.id === todayData.categoryID){
+                    //id 동일한 것이 있을 경우
+                    if(activeKey === "income"){
+                        //수입
+                        const mathMoney = Number(element.incomeMoney?.replace(/,/g, "")) - Number(todayData.money?.replace(/,/g, ""));//쉼표(콤마) 제거
+                        element.incomeMoney = mathMoney?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") ?? null;//값에 쉼표(콤마) 삽입
+                    }else if(activeKey === "export") {
+                        //지출
+                        const mathMoney = Number(element.exportMoney?.replace(/,/g, "")) - Number(todayData.money?.replace(/,/g, ""));//쉼표(콤마) 제거
+                        element.exportMoney = mathMoney?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") ?? null;//값에 쉼표(콤마) 삽입
+                    }else {
+                        //에러
+                    }
+                    return element;
+                }else{
+                    //id 동일한 것이 없을 경우 변동사항 없음
+                }
+                return element;
+            });
+        }else {
+            //categoryID 가 없을 경우(값이 null 일 경우) 카테고리순 변동사항 없음
+        }
+        return {total:copyTotal};
+    })
 }));
