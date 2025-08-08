@@ -68,6 +68,8 @@ export default function List(){
     const dateMathSum = useDateGroupStore((state) => state.mathSum);
     const dateMathImsub = useDateGroupStore((state) => state.mathImsub);
     const updateInfo = useCategoryGroupStore((state) => state.updateInfo);
+
+    const categoryInit = useCategoryGroupStore((state) => state.initUpdate);
     const categoryMathSum = useCategoryGroupStore((state) => state.mathSum);
     const categoryMathImsub = useCategoryGroupStore((state) => state.mathImsub);
 
@@ -122,9 +124,16 @@ export default function List(){
 
 
     const [isSubmitButton, setIsSubmitButton] = useState(false); //form 태그 onSubmin 발동 시 애니메이션 발동
-
+    {/*
+        categoryInit 작성 위치 고민(250808 확인 사항 3번)
+        1. categoryInit 함수 : 페이지 진입 시 왼쪽 카테고리순 모음집에 있는 내용을 판단 후 초기화
+        2. 해당 component/List.tsx 는 카테고리순 태그가 있는 파일이 아님(1번에 있는 함수 내용 관련)
+        3. 변수 todayTime 때문에 선언 위치가 작동하는? 태그 파일과 다른 위치에 함수 선언됨
+            => 변수 todayTime 는 해당 프로젝트 다양한 파일에서 사용되지 않지만, 중요한 키라고 생각함. 그렇다면 todayTime store 를 생성하는 게 맞나?
+    */}
     useEffect(() => {
         initUpdate(todayTime);
+        categoryInit(todayTime);
     }, []);
     return (
     <div className={`${findView?.id === 0 ? "block" : "hidden"} w-[100%] md:w-[15.625vw] md:pt-[3.333vw]`}>
@@ -200,8 +209,8 @@ export default function List(){
                 w-[14.667vw] h-[14.667vw] absolute top-[-0.625vw] left-[-0.729vw] cursor-pointer rounded-full bg-[#FF5858] duration-700 origin-center
                 sm:w-[7.161vw] sm:h-[7.161vw] md:w-[2.865vw] md:h-[2.865vw]
                 hover:rotate-[180deg] ${isSubmitButton ? "rotate-[180deg]" : null}
-                after:content-['+'] after:absolute after:top-[42%] after:left-1/2 after:text-[#ffffff] after:text-[7.516vw] after:font-light after:translate-x-[-50%] after:translate-y-[-50%]
-                md:after:text-[3.333vw]
+                after:content-['+'] after:absolute after:top-[42%] after:left-1/2 after:text-[#ffffff] after:text-[16.8vw] after:font-light after:translate-x-[-50%] after:translate-y-[-50%]
+                sm:after:text-[7.516vw] md:after:text-[3.333vw]
                 `}></button>
                 {/* 금일 일자 wrap */}
                 <div className="
@@ -224,9 +233,9 @@ export default function List(){
 
                             return (<li key={index}><button type="button"
                                                             className={`
-                                                                px-[0.729vw] py-[1.333vw] cursor-pointer text-[3.733vw] font-normal rounded-[5.333vw] duration-150 whitespace-nowrap hover:text-[#000000]
-                                                                sm:py-[0.651vw] sm:text-[1.823vw] sm:rounded-[2.604vw]
-                                                                md:py-[0.26vw] md:text-[0.729vw] md:rounded-[1.042vw]
+                                                                px-[3.733vw] py-[1.333vw] cursor-pointer text-[3.733vw] font-normal rounded-[5.333vw] duration-150 whitespace-nowrap hover:text-[#000000]
+                                                                sm:px-[1.823vw] sm:py-[0.651vw] sm:text-[1.823vw] sm:rounded-[2.604vw]
+                                                                md:px-[0.729vw] md:py-[0.26vw] md:text-[0.729vw] md:rounded-[1.042vw]
                                                             ${!clickType.typeButton[typeKey].isActive ? "text-[#575757] bg-[#D4D4D4]" : activePalette[typeKey].button }`}
                                                             onClick={(event)=>{
                                                                 event.preventDefault();
@@ -251,9 +260,9 @@ export default function List(){
                     {/* 금액 */}
                     <div className="flex items-center mt-[1.333vw] sm:mt-[0.651vw] md:mt-[0.26vw]">
                         <input type="text" className={`
-                            w-[4.688vw] rounded-[1.333vw] text-[1.25vw] text-right leading-[110%] ${clickType.typeButton.income.isActive ? activePalette.income.text : clickType.typeButton.export.isActive ? activePalette.export.text : "text-[#000000]" }
-                            sm:w-[4.688vw] sm:rounded-[0.651vw] 
-                            md:w-[4.688vw] md:rounded-[0.26vw]
+                            w-[24vw] rounded-[1.333vw] text-[6.4vw] text-right leading-[110%] ${clickType.typeButton.income.isActive ? activePalette.income.text : clickType.typeButton.export.isActive ? activePalette.export.text : "text-[#000000]" }
+                            sm:w-[11.719vw] sm:rounded-[0.651vw] sm:text-[3.125vw]
+                            md:w-[4.688vw] md:rounded-[0.26vw] md:text-[1.25vw]
                             `} value={changeInput.money === null ? "" : changeInput.money} onChange={(event) => {
                             const copyChangeInput = {...changeInput};
                             const changeText = event.target.value.replace(/[^0-9]/g, "");
@@ -281,6 +290,12 @@ export default function List(){
                     sm:gap-[9.115vw] sm:mt-[3.125vw] sm:ml-[4.427vw] sm:pr-[4.427vw] sm:pb-[3.125vw]
                     md:gap-[3.646vw] md:mt-[1.25vw] md:ml-[1.771vw] md:pr-[1.771vw] md:pb-[1.25vw]
                 ">
+                    {/*
+                        아래 button 태그 onClick 관련(250808 확인 사항 1번 1-1)
+                        1. 해당 버튼을 클릭 후 카테고리 이름을 변경
+                        2. 창 닫으면 왼쪽 카테고리순에 이름 반영
+                            => input 은 실시간 / button 은 창 닫으면 반영으로, 로직만으로 판단했을 때는 이런 식으로 작업하는게 옳다고 판단했으나 직접 사용했을 때 "둘 중 한쪽이 버그인가?"라는 말이 나올 수 있겠다? 생각이 듦
+                     */}
                     <button type="button" className={`
                             w-[3.733vw] h-[3.733vw] block rounded-full cursor-pointer ${!isViewCategory.first ? "bg-conic/decreasing from-violet-700 via-lime-300 to-violet-700" : null}
                             sm:w-[1.823vw] sm:h-[1.823vw]
@@ -316,13 +331,13 @@ export default function List(){
                     {/* 카테고리 선택 창 */}
                     <div className={`
                         ${isViewCategory.always ? "block" : "hidden"} absolute top-[6.4vw] left-[0] rounded-[5.333vw] border border-[#E9E9E9] bg-[#ffffff] shadow-lg
-                        sm:top-[3.125vw] sm:rounded-[2.604vw]
-                        md:top-[1.25vw] md:rounded-[1.042vw]
+                        sm:top-[3.125vw] sm:left-[50%] sm:rounded-[2.604vw] sm:translate-x-[-50%]
+                        md:top-[1.25vw] md:left-[0] md:rounded-[1.042vw] md:translate-x-[inherit]
                     `}>
                         {/* 카테고리 색상 선택 */}
                         <ul className="
-                            flex gap-[1.333vw] px-[0.833vw] pt-[2.667vw] pb-[2.667vw]
-                            sm:gap-[0.651vw] sm:px-[0.833vw] sm:pt-[1.302vw] sm:pb-[1.302vw]
+                            flex gap-[1.333vw] px-[4.267vw] pt-[2.667vw] pb-[2.667vw]
+                            sm:gap-[0.651vw] sm:px-[2.083vw] sm:pt-[1.302vw] sm:pb-[1.302vw]
                             md:gap-[0.26vw] md:px-[0.833vw] md:pt-[0.521vw] md:pb-[0.521vw]
                             ">
                             {category.map((element, index)=>{
@@ -337,6 +352,11 @@ export default function List(){
                                 </li>)
                             })}
                         </ul>
+                        {/*
+                            아래 input 태그 onChange 관련(250808 확인 사항 1번 1-2(끝))
+                            1. input 에서 카테고리 이름 변경 시 로컬 스토리지 category-list 실시간 반영
+                                => input 은 실시간 / button 은 창 닫으면 반영으로, 로직만으로 판단했을 때는 이런 식으로 작업하는게 옳다고 판단했으나 직접 사용했을 때 "둘 중 한쪽이 버그인가?"라는 말이 나올 수 있겠다? 생각이 듦
+                         */}
                         <input type="text" className="
                             w-[48vw] mx-[4.267vw] mt-[1.333vw] mb-[3.733vw] text-[#000000] text-[3.733vw]
                             sm:w-[23.438vw] sm:mx-[2.083vw] sm:mt-[0.651vw] sm:mb-[1.823vw] sm:text-[1.823vw]
@@ -349,7 +369,7 @@ export default function List(){
             </div>
         </form>
         {/* 리스트 */}
-        <ul className="h-[96vw] pt-[2.667vw] overflow-y-auto sm:h-[46.875vw] sm:pt-[1.302vw] md:h-[18.75vw] md:pt-[0.521vw]">
+        <ul className="h-[106.667vw] pt-[2.667vw] overflow-y-auto sm:h-[52.083vw] sm:pt-[1.302vw] md:h-[18.75vw] md:pt-[0.521vw]">
             {todayData !== undefined ? todayData.list.map((element, index)=>{
                 if(!element.isDeleted){
                     const useObject = category.find((item)=>item.id === element.categoryID);

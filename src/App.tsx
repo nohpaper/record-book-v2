@@ -8,7 +8,7 @@ function App() {
   return (
     <>
         <div className="
-            min-w-[100vw] min-h-[100vh] flex flex-col justify-between items-center pt-[5.99vw] px-[3.125vw] bg-linear-185 from-[rgba(214,239,217,.5)]] via-[rgba(239,222,214,.5)] to-[rgba(203,218,239,.5)]
+            min-w-[100vw] min-h-[100vh] flex flex-col justify-between items-center pt-[5.99vw] px-[3.125vw] box-border bg-linear-185 from-[rgba(214,239,217,.5)]] via-[rgba(239,222,214,.5)] to-[rgba(203,218,239,.5)]
             md:flex-row md:items-start md:justify-center md:pt-[10.938vw]
         ">
             <Group></Group>
@@ -19,7 +19,7 @@ function App() {
                 ">
                     {mobileTabView.map((element, index) => {
                         return (<li key={index} className="w-[50%] mx-[0.781vw] my-[0.521vw] rounded-[5.208vw] overflow-hidden">
-                            <button type="button" className={`w-[100%] block  py-[0.781vw] overflow-hidden ${element.isView ? "text-[#fff] bg-[#7F7F7F]" : "text-[#3F3F3F] bg-transparent"} text-center text-[1.563vw]`} onClick={() => {
+                            <button type="button" className={`w-[100%] block  py-[0.781vw] overflow-hidden ${element.isView ? "text-[#fff] bg-[#7F7F7F]" : "text-[#3F3F3F] bg-transparent"} text-center text-[4.267vw] sm:text-[2.083vw] md:text-[1.563vw]`} onClick={() => {
                                 isMobileView(element.id);
                             }}>
                                 <span>{element.koreaName}</span>

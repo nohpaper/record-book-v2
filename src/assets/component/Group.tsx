@@ -30,7 +30,7 @@ export default function Group(){
     const findView = mobileTabView.find((element)=>element.isView);
 
     return (
-        <div className={`${findView?.id === 1 ? "block" : "hidden"} mr-[5.333vw] sm:w-[100%] sm:mr-[2.604vw] md:w-[inherit] md:block md:mr-[1.042vw]`}>
+        <div className={`${findView?.id === 1 ? "block" : "hidden"} mr-[0] sm:w-[100%] sm:mr-[2.604vw] md:w-[inherit] md:block md:mr-[1.042vw]`}>
             {/* 탭 */}
             <ul className="flex gap-[2.667vw] sm:gap-[1.302vw] md:gap-[0.521vw]">
                 {bigGroup.map((element, index) => {
@@ -168,7 +168,7 @@ export default function Group(){
 
                         return (<li key={index} className="w-[100%] rounded-[10.667vw] bg-[rgba(255,255,255,.8)]
                             sm:w-[100%] sm:rounded-[5.208vw]
-                            md:w-[12.5vw] md:rounded-[2.083vw]" style={{backgroundImage:`linear-gradient(180deg, ${key.color}, transparent)`}}>
+                            md:w-[12.5vw] md:rounded-[2.083vw]" style={{backgroundImage:`linear-gradient(180deg, ${key.color} -50%, transparent)`}}>
                             <h5 className="
                                 block mx-[5.333vw] pt-[4.267vw] text-[#3F3F3F] text-[6.4vw] text-right box-border overflow-hidden
                                 sm:mx-[2.604vw] sm:pt-[2.083vw] sm:text-[3.125vw]
